@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PNG to PDF Converter</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .container {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+        }
+        input[type="file"] {
+            margin: 20px 0;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #preview {
+            margin-top: 20px;
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>PNG to PDF Converter</h2>
+        <input type="file" id="fileInput" accept="image/png">
+        <br>
+        <button onclick="convertToPDF()">Convert to PDF</button>
+        <div id="previewContainer">
+            <img id="preview" src="#" alt="Image preview">
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+
+        // Handle file selection
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file && file.type === 'image/png') {
+                selectedFile = file;
+                
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('preview').src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function convertToPDF() {
+            if (!selectedFile) {
+                alert('Please select a PNG file first!');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const image = new Image();
+                image.src = e.target.result;
+
+                image.onload = function() {
+                    // Calculate dimensions to fit A4 size (PDF dimensions are in mm)
+                    const pdf = new jspdf.jsPDF();
+                    const pageWidth = pdf.internal.pageSize.getWidth();
+                    const pageHeight = pdf.internal.pageSize.getHeight();
+                    
+                    // Calculate aspect ratio
+                    const imageAspectRatio = image.width / image.height;
+                    const pageAspectRatio = pageWidth / pageHeight;
+
+                    let width, height;
+                    if (imageAspectRatio > pageAspectRatio) {
+                        width = pageWidth;
+                        height = pageWidth / imageAspectRatio;
+                    } else {
+                        height = pageHeight;
+                        width = pageHeight * imageAspectRatio;
+                    }
+
+                    // Add image to PDF
+                    pdf.addImage(image, 'PNG', 0, 0, width, height);
+                    
+                    // Save PDF
+                    pdf.save('converted.pdf');
+                };
+            };
+            reader.readAsDataURL(selectedFile);
+        }
+    </script>
+</body>
+</html>
